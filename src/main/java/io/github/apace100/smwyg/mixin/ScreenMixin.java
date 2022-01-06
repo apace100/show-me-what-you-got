@@ -5,6 +5,7 @@ import io.github.apace100.smwyg.tooltip.ItemStackTooltipComponent;
 import io.github.apace100.smwyg.ShowMeWhatYouGot;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.tooltip.TooltipComponent;
 import net.minecraft.client.util.math.MatrixStack;
@@ -12,6 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.text.HoverEvent;
 import net.minecraft.text.Style;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -23,6 +25,7 @@ import java.util.List;
 @Environment(EnvType.CLIENT)
 public class ScreenMixin {
 
+    @Shadow protected TextRenderer textRenderer;
     @Unique
     private ItemStack smwyg$StackToRender;
 
@@ -48,7 +51,12 @@ public class ScreenMixin {
         }
         TooltipComponent originalComponent = components.get(0);
         TooltipComponent stackComponent = new ItemStackTooltipComponent(smwyg$StackToRender);
-        TooltipComponent combinedComponent = new HorizontalLayoutTooltipComponent(List.of(stackComponent, originalComponent), 3);
+        TooltipComponent combinedComponent;
+        if(this.textRenderer.isRightToLeft()) {
+            combinedComponent = new HorizontalLayoutTooltipComponent(List.of(originalComponent, stackComponent), 3);
+        } else {
+            combinedComponent = new HorizontalLayoutTooltipComponent(List.of(stackComponent, originalComponent), 3);
+        }
         components.set(0, combinedComponent);
         smwyg$StackToRender = null;
     }
