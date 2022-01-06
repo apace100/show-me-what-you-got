@@ -1,38 +1,39 @@
 {
   "schemaVersion": 1,
-  "id": "modid",
+  "id": "smwyg",
   "version": "${version}",
 
-  "name": "Example Mod",
-  "description": "This is an example description! Tell everyone what your mod is about!",
+  "name": "Show Me What You Got",
+  "description": "Allows displaying your items to other players in chat.",
   "authors": [
-    "Me!"
+    "Apace"
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "homepage": "https://www.curseforge.com/minecraft/mc-mods/show-me-what-you-got",
+    "sources": "https://github.com/apace100/show-me-what-you-got",
+    "issues": "https://github.com/apace100/show-me-what-you-got/issues"
   },
 
-  "license": "CC0-1.0",
-  "icon": "assets/modid/icon.png",
+  "license": "MIT",
+  "icon": "assets/smwyg/icon.png",
 
   "environment": "*",
   "entrypoints": {
     "main": [
-      "net.fabricmc.example.ExampleMod"
+      "io.github.apace100.smwyg.ShowMeWhatYouGot"
+    ],
+    "client": [
+      "io.github.apace100.smwyg.ShowMeWhatYouGotClient"
     ]
   },
   "mixins": [
-    "modid.mixins.json"
+    "smwyg.mixins.json"
   ],
 
   "depends": {
     "fabricloader": ">=0.11.3",
     "fabric": "*",
-    "minecraft": "1.18.x",
+    "minecraft": ">=1.18",
     "java": ">=17"
-  },
-  "suggests": {
-    "another-mod": "*"
   }
 }
