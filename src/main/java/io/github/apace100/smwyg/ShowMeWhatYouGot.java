@@ -5,6 +5,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.MessageType;
+import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
@@ -22,12 +23,16 @@ public class ShowMeWhatYouGot implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-
 		ServerPlayNetworking.registerGlobalReceiver(PACKET_ID, ((minecraftServer, serverPlayerEntity, serverPlayNetworkHandler, packetByteBuf, packetSender) -> {
+			String before = packetByteBuf.readString();
 			NbtCompound nbt = packetByteBuf.readNbt();
 			ItemStack stack = ItemStack.fromNbt(nbt);
+			String after = packetByteBuf.readString();
 			minecraftServer.execute(() -> {
-				Text chatText = new TranslatableText("chat.type.text", serverPlayerEntity.getDisplayName(), stack.toHoverableText());
+				LiteralText beforeText = new LiteralText(before);
+				LiteralText afterText = new LiteralText(after);
+				Text completeText = beforeText.append(stack.toHoverableText()).append(afterText);
+				Text chatText = new TranslatableText("chat.type.text", serverPlayerEntity.getDisplayName(), completeText);
 				minecraftServer.getPlayerManager().broadcast(chatText, MessageType.CHAT, serverPlayerEntity.getUuid());
 			});
 		}));
