@@ -29,18 +29,6 @@ public class ShowMeWhatYouGotClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        Optional<ModContainer> calioMod = FabricLoader.getInstance().getModContainer("calio");
-        if(calioMod.isPresent()) {
-            try {
-                Version highestCalioVersionWithItemSharing = Version.parse("1.4.2");
-                if(calioMod.get().getMetadata().getVersion().compareTo(highestCalioVersionWithItemSharing) <= 0) {
-                    ShowMeWhatYouGot.LOGGER.info("Calio <= 1.4.2 detected, turning off Show Me What You Got item sharing keybind.");
-                    return;
-                }
-            } catch (VersionParsingException e) {
-                ShowMeWhatYouGot.LOGGER.warn("Could not properly detect whether Calio was present. Possible side-effect: items are shared in chat twice.");
-            }
-        }
         ClientTickEvents.START_CLIENT_TICK.register(tick -> {
             MinecraftClient client = MinecraftClient.getInstance();
             if(client.player != null && client.currentScreen instanceof HandledScreen) {

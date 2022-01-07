@@ -6,14 +6,16 @@
   "mixins": [
   ],
   "client": [
+    "CalioClientMixin",
     "ChatScreenAccessor",
     "ChatScreenMixin",
-    "SuggestionWindowMixin",
-    "TextFieldWidgetMixin",
     "HandledScreenFocusedSlotAccessor",
-    "ScreenMixin"
+    "ScreenMixin",
+    "SuggestionWindowMixin",
+    "TextFieldWidgetMixin"
   ],
   "injectors": {
     "defaultRequire": 1
-  }
+  },
+  "plugin": "io.github.apace100.smwyg.compat.CalioPlugin"
 }
