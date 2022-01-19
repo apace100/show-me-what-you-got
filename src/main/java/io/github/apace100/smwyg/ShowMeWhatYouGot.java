@@ -33,7 +33,7 @@ public class ShowMeWhatYouGot implements ModInitializer {
 				LiteralText afterText = new LiteralText(after);
 				Text completeText = beforeText.append(stack.toHoverableText()).append(afterText);
 				Text chatText = new TranslatableText("chat.type.text", serverPlayerEntity.getDisplayName(), completeText);
-				minecraftServer.getPlayerManager().broadcast(chatText, MessageType.CHAT, serverPlayerEntity.getUuid());
+				minecraftServer.getPlayerManager().broadcastChatMessage(chatText, MessageType.CHAT, serverPlayerEntity.getUuid());
 			});
 		}));
 	}

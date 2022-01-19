@@ -4,6 +4,7 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.tooltip.TooltipComponent;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.item.ItemRenderer;
+import net.minecraft.client.texture.TextureManager;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.Matrix4f;
 
@@ -58,10 +59,10 @@ public class HorizontalLayoutTooltipComponent implements TooltipComponent {
     }
 
     @Override
-    public void drawItems(TextRenderer textRenderer, int x, int y, MatrixStack matrices, ItemRenderer itemRenderer, int z) {
+    public void drawItems(TextRenderer textRenderer, int x, int y, MatrixStack matrices, ItemRenderer itemRenderer, int z, TextureManager textureManager) {
         int currentX = x;
         for(TooltipComponent tc : components) {
-            tc.drawItems(textRenderer, currentX, y + getComponentY(tc), matrices, itemRenderer, z);
+            tc.drawItems(textRenderer, currentX, y + getComponentY(tc), matrices, itemRenderer, z, textureManager);
             currentX += tc.getWidth(textRenderer) + gap;
         }
     }
