@@ -35,7 +35,7 @@ public class ShowMeWhatYouGotClient implements ClientModInitializer {
                 HandledScreenFocusedSlotAccessor focusedSlotAccessor = (HandledScreenFocusedSlotAccessor)client.currentScreen;
                 Slot focusedSlot = focusedSlotAccessor.getFocusedSlot();
                 boolean isCtrlPressed = InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow().getHandle(), GLFW.GLFW_KEY_LEFT_CONTROL);
-                InputUtil.Key key = KeyBindingHelper.getBoundKeyOf(client.options.keyChat);
+                InputUtil.Key key = KeyBindingHelper.getBoundKeyOf(client.options.chatKey);
                 boolean isChatPressed = InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow().getHandle(), key.getCode());
                 if(isCtrlPressed && isChatPressed && !sharedStack) {
                     sharedStack = true;
