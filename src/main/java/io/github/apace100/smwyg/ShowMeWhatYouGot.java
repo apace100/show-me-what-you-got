@@ -4,10 +4,18 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.network.encryption.NetworkEncryptionUtils;
+import net.minecraft.network.message.MessageSignature;
+import net.minecraft.network.message.MessageType;
+import net.minecraft.network.packet.s2c.play.ChatMessageS2CPacket;
 import net.minecraft.text.*;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.time.Instant;
+import java.util.Optional;
 
 public class ShowMeWhatYouGot implements ModInitializer {
 
@@ -29,8 +37,10 @@ public class ShowMeWhatYouGot implements ModInitializer {
 				MutableText beforeText = Text.literal(before);
 				MutableText afterText = Text.literal(after);
 				Text completeText = beforeText.append(stack.toHoverableText()).append(afterText);
-				Text chatText = Text.translatable("chat.type.text", serverPlayerEntity.getDisplayName(), completeText);
-				minecraftServer.getPlayerManager().broadcast(chatText, false);
+				Registry<MessageType> registry = minecraftServer.getRegistryManager().get(Registry.MESSAGE_TYPE_KEY);
+				int messageTypeId = registry.getRawId(registry.get(MessageType.CHAT));
+				minecraftServer.getPlayerManager().sendToAll(new ChatMessageS2CPacket(completeText, Optional.of(completeText),
+					messageTypeId, serverPlayerEntity.asMessageSender(), Instant.now(), MessageSignature.none().saltSignature()));
 			});
 		}));
 	}
