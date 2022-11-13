@@ -4,9 +4,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.encryption.NetworkEncryptionUtils;
-import net.minecraft.network.message.MessageSignature;
-import net.minecraft.network.message.MessageType;
+import net.minecraft.network.message.*;
 import net.minecraft.network.packet.s2c.play.ChatMessageS2CPacket;
 import net.minecraft.text.*;
 import net.minecraft.util.Identifier;
@@ -16,6 +14,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.time.Instant;
 import java.util.Optional;
+import java.util.Random;
+import java.util.UUID;
 
 public class ShowMeWhatYouGot implements ModInitializer {
 
@@ -39,8 +39,25 @@ public class ShowMeWhatYouGot implements ModInitializer {
 				Text completeText = beforeText.append(stack.toHoverableText()).append(afterText);
 				Registry<MessageType> registry = minecraftServer.getRegistryManager().get(Registry.MESSAGE_TYPE_KEY);
 				int messageTypeId = registry.getRawId(registry.get(MessageType.CHAT));
-				minecraftServer.getPlayerManager().sendToAll(new ChatMessageS2CPacket(completeText, Optional.of(completeText),
-					messageTypeId, serverPlayerEntity.asMessageSender(), Instant.now(), MessageSignature.none().saltSignature()));
+				var uuid = UUID.randomUUID();
+				var signer = new MessageMetadata(uuid, Instant.now(), (new Random()).nextLong());
+				var signature = MessageSignatureData.EMPTY;
+
+				minecraftServer.getPlayerManager().sendToAll(new ChatMessageS2CPacket(
+						new SignedMessage(
+								new MessageHeader(signature, uuid),
+								signature,
+								new MessageBody(
+										new DecoratedContents("", completeText),
+										signer.timestamp(),
+										signer.salt(),
+										LastSeenMessageList.EMPTY
+								),
+								Optional.of(completeText),
+								FilterMask.PASS_THROUGH
+						),
+						new MessageType.Serialized(messageTypeId, serverPlayerEntity.getDisplayName(), afterText)
+				));
 			});
 		}));
 	}
