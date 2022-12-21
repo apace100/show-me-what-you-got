@@ -1,11 +1,10 @@
 package io.github.apace100.smwyg.mixin;
 
 import com.mojang.brigadier.suggestion.Suggestion;
-import io.github.apace100.smwyg.ShowMeWhatYouGot;
 import io.github.apace100.smwyg.duck.ItemSharingTextFieldWidget;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ChatInputSuggestor;
 import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.client.gui.screen.CommandSuggestor;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.List;
 
-@Mixin(CommandSuggestor.SuggestionWindow.class)
+@Mixin(ChatInputSuggestor.SuggestionWindow.class)
 public class SuggestionWindowMixin {
 
     @Shadow @Final private List<Suggestion> suggestions;
