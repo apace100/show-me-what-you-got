@@ -52,14 +52,13 @@ public class ShowMeWhatYouGotClient implements ClientModInitializer {
         });
     }
 
-    public static void sendItemSharingMessage(String before, ItemStack stack, String after) {
+    public static void sendItemSharingMessage(int start, int end, ItemStack stack) {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
         NbtCompound nbt = new NbtCompound();
         stack.writeNbt(nbt);
-        buf.writeString(before);
+        buf.writeVarInt(start);
+        buf.writeVarInt(end);
         buf.writeNbt(nbt);
-        buf.writeString(after);
         ClientPlayNetworking.send(ShowMeWhatYouGot.PACKET_ID, buf);
     }
-
 }

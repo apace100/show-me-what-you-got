@@ -1,6 +1,7 @@
 package io.github.apace100.smwyg.mixin;
 
 import io.github.apace100.smwyg.ShowMeWhatYouGot;
+import io.github.apace100.smwyg.SmwygItemMatch;
 import io.github.apace100.smwyg.duck.ItemSharingTextFieldWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.resource.language.I18n;
@@ -128,7 +129,7 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
             return text;
         }
         if(ShowMeWhatYouGot.hasSmwygItem(text)) {
-            ShowMeWhatYouGot.SmwygItemMatch itemMatch = ShowMeWhatYouGot.extractItem(text);
+            SmwygItemMatch itemMatch = ShowMeWhatYouGot.extractItem(text);
             String before = text.substring(0, itemMatch.start);
             String after = text.substring(itemMatch.end);
             if(itemMatch.stack == null) {
@@ -154,5 +155,15 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
         insertedString = "";
         insertedIndex = 0;
         insertedLength = 0;
+    }
+
+    @Override
+    public int getInsertionStart() {
+        return insertedIndex;
+    }
+
+    @Override
+    public int getInsertionEnd() {
+        return insertedIndex + insertedLength;
     }
 }

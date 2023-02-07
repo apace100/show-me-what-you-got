@@ -56,12 +56,10 @@ public abstract class ChatScreenMixin extends Screen {
             String after = istfw.getTextAfter();
             NbtCompound nbt = new NbtCompound();
             stack.writeNbt(nbt);
-            StringBuilder stackStringBuilder = new StringBuilder("[[smwyg:");
-            stackStringBuilder.append(nbt);
-            stackStringBuilder.append("]]");
-            this.sendMessage(before + stackStringBuilder + after, true);
-            //this.client.inGameHud.getChatHud().addToMessageHistory(before + I18n.translate("smwyg.chat.stale_link") + after);
-            //ShowMeWhatYouGotClient.sendItemSharingMessage(before, stack, after);
+            String stackString = "[[smwyg:" + nbt + "]]";
+            ShowMeWhatYouGotClient.sendItemSharingMessage(istfw.getInsertionStart(), istfw.getInsertionEnd(), stack);
+            this.sendMessage(this.chatField.getText(), false);
+            this.client.inGameHud.getChatHud().addToMessageHistory(before + stackString + after);
             this.chatField.setText("");
         }
     }

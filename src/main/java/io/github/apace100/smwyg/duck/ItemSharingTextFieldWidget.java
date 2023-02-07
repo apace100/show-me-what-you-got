@@ -11,4 +11,6 @@ public interface ItemSharingTextFieldWidget {
     boolean hasStack();
     void onSuggestionInserted(int start, int offset);
     void reset();
+    int getInsertionStart();
+    int getInsertionEnd();
 }
