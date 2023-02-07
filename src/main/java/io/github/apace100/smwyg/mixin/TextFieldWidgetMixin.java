@@ -1,7 +1,9 @@
 package io.github.apace100.smwyg.mixin;
 
+import io.github.apace100.smwyg.ShowMeWhatYouGot;
 import io.github.apace100.smwyg.duck.ItemSharingTextFieldWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.resource.language.I18n;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,6 +20,7 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
 
     @Shadow private String text;
 
+    @Shadow private int selectionStart;
     private ItemStack itemStack;
     private String insertedString;
     private int insertedLength;
@@ -101,13 +104,8 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
 
     @Inject(method = "eraseCharacters", at = @At(value = "INVOKE", target = "Ljava/lang/StringBuilder;<init>(Ljava/lang/String;)V"), locals = LocalCapture.CAPTURE_FAILHARD)
     private void eraseInsertion(int characterOffset, CallbackInfo ci, int i, int j, int k) {
-        boolean isStartInside = j > insertedIndex && j < insertedIndex + insertedLength;
-        boolean isEndInside = k > insertedIndex && k < insertedIndex + insertedLength;
-        if(isStartInside || isEndInside || (j < insertedIndex && k >= insertedIndex + insertedLength)) {
-            this.itemStack = null;
-            this.insertedLength = 0;
-            this.insertedString = "";
-            this.insertedIndex = 0;
+        if(j <= insertedIndex && k >= insertedIndex + insertedLength) {
+            reset();
         } else {
             if(j <= insertedIndex || k <= insertedIndex) {
                 this.insertedIndex -= (k - j);
@@ -122,5 +120,39 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
         } else {
             return original;
         }
+    }
+
+    @ModifyVariable(method = "setText", at = @At("HEAD"), argsOnly = true, ordinal = 0)
+    private String handleItemSetting(String text) {
+        if(hasStack()) {
+            return text;
+        }
+        if(ShowMeWhatYouGot.hasSmwygItem(text)) {
+            ShowMeWhatYouGot.SmwygItemMatch itemMatch = ShowMeWhatYouGot.extractItem(text);
+            String before = text.substring(0, itemMatch.start);
+            String after = text.substring(itemMatch.end);
+            if(itemMatch.stack == null) {
+                text = before + I18n.translate("smwyg.chat.stale_link") + after;
+                reset();
+            } else {
+                String itemText = itemMatch.stack.toHoverableText().getString();
+                text = before + itemText + after;
+                itemStack = itemMatch.stack;
+                insertedString = itemText;
+                insertedIndex = itemMatch.start;
+                insertedLength = itemText.length();
+            }
+        } else {
+            reset();
+        }
+        return text;
+    }
+
+    @Override
+    public void reset() {
+        itemStack = null;
+        insertedString = "";
+        insertedIndex = 0;
+        insertedLength = 0;
     }
 }

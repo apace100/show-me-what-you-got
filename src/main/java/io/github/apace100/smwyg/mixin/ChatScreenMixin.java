@@ -3,8 +3,12 @@ package io.github.apace100.smwyg.mixin;
 import io.github.apace100.smwyg.ShowMeWhatYouGotClient;
 import io.github.apace100.smwyg.duck.ItemSharingTextFieldWidget;
 import net.minecraft.client.gui.screen.ChatScreen;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.resource.language.I18n;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.text.Text;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -14,9 +18,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ChatScreen.class)
-public class ChatScreenMixin {
+public abstract class ChatScreenMixin extends Screen {
 
     @Shadow protected TextFieldWidget chatField;
+
+    protected ChatScreenMixin(Text title) {
+        super(title);
+    }
+
+    @Shadow public abstract boolean sendMessage(String chatText, boolean addToHistory);
 
     @Inject(method = "init", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;setText(Ljava/lang/String;)V"))
     private void setItemSharingText(CallbackInfo ci) {
@@ -25,6 +35,13 @@ public class ChatScreenMixin {
                 istfw.setStack(ShowMeWhatYouGotClient.sharingItem);
                 ShowMeWhatYouGotClient.sharingItem = null;
             }
+        }
+    }
+
+    @Inject(method = "setChatFromHistory", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;setText(Ljava/lang/String;)V"))
+    private void removeSetItem(int offset, CallbackInfo ci) {
+        if(this.chatField instanceof ItemSharingTextFieldWidget istfw) {
+            istfw.reset();
         }
     }
 
@@ -37,7 +54,14 @@ public class ChatScreenMixin {
             String before = istfw.getTextBefore();
             ItemStack stack = istfw.getStack();
             String after = istfw.getTextAfter();
-            ShowMeWhatYouGotClient.sendItemSharingMessage(before, stack, after);
+            NbtCompound nbt = new NbtCompound();
+            stack.writeNbt(nbt);
+            StringBuilder stackStringBuilder = new StringBuilder("[[smwyg:");
+            stackStringBuilder.append(nbt);
+            stackStringBuilder.append("]]");
+            this.sendMessage(before + stackStringBuilder + after, true);
+            //this.client.inGameHud.getChatHud().addToMessageHistory(before + I18n.translate("smwyg.chat.stale_link") + after);
+            //ShowMeWhatYouGotClient.sendItemSharingMessage(before, stack, after);
             this.chatField.setText("");
         }
     }
