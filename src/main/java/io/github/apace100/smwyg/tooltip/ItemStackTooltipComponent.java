@@ -25,13 +25,13 @@ public class ItemStackTooltipComponent implements TooltipComponent {
     }
 
     @Override
-    public void drawItems(TextRenderer textRenderer, int x, int y, MatrixStack matrices, ItemRenderer itemRenderer, int z) {
-        itemRenderer.renderInGui(stack, x, y);
+    public void drawItems(TextRenderer textRenderer, int x, int y, MatrixStack matrices, ItemRenderer itemRenderer) {
+        itemRenderer.renderInGui(matrices, stack, x, y);
         int count = stack.getCount();
         String countLabel = "";
         if(count > 1) {
             countLabel = "" + stack.getCount();
         }
-        itemRenderer.renderGuiItemOverlay(textRenderer, stack, x, y, countLabel);
+        itemRenderer.renderGuiItemOverlay(matrices, textRenderer, stack, x, y, countLabel);
     }
 }

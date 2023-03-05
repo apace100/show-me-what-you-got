@@ -58,10 +58,10 @@ public class HorizontalLayoutTooltipComponent implements TooltipComponent {
     }
 
     @Override
-    public void drawItems(TextRenderer textRenderer, int x, int y, MatrixStack matrices, ItemRenderer itemRenderer, int z) {
+    public void drawItems(TextRenderer textRenderer, int x, int y, MatrixStack matrices, ItemRenderer itemRenderer) {
         int currentX = x;
         for(TooltipComponent tc : components) {
-            tc.drawItems(textRenderer, currentX, y + getComponentY(tc), matrices, itemRenderer, z);
+            tc.drawItems(textRenderer, currentX, y + getComponentY(tc), matrices, itemRenderer);
             currentX += tc.getWidth(textRenderer) + gap;
         }
     }
