@@ -169,7 +169,7 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
         }
     }
 
-    // all input actions are performed through calls to write(), except for un-highlighted backspace/delete. handle that here.
+    // all input actions are performed through calls to write(), except for backspace/delete when nothing is selected. handle that here.
     @Inject(method = "eraseCharacters", at = @At(value = "INVOKE", target = "Ljava/lang/StringBuilder;<init>(Ljava/lang/String;)V"), locals = LocalCapture.CAPTURE_FAILHARD)
     private void eraseInsertion(int characterOffset, CallbackInfo ci, int index, int start, int end) {
         if (!this.hasStack()) {
@@ -180,7 +180,7 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
     }
 
     private void handleOverwrite(int start, int end, int replacementLength) {
-        // when nothing is highlighted, start == end
+        // when no text is selected, start == end
 
         boolean isErasingEntireTag = start <= insertedIndex && end >= insertedIndex + insertedLength;
         // selecting a range inside the tag is not typically possible, but handle it anyway
