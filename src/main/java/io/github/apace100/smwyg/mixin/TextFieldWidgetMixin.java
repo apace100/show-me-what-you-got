@@ -182,8 +182,6 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
     private void handleOverwrite(int start, int end, int replacementLength) {
         // when nothing is highlighted, start == end
 
-        Log.info(LogCategory.GENERAL, "erasing [%d,%d)", start, end);
-
         boolean isErasingEntireTag = start <= insertedIndex && end >= insertedIndex + insertedLength;
         // selecting a range inside the tag is not typically possible, but handle it anyway
         boolean isStartInside = start > insertedIndex && start < insertedIndex + insertedLength;
@@ -194,7 +192,6 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
             reset();
         } else if (isErasingBefore) {
             int offset = replacementLength - (end - start);
-            Log.info(LogCategory.GENERAL, "moving tag from %d to %d", insertedIndex, insertedIndex + offset);
             insertedIndex += offset;
         }
     }
