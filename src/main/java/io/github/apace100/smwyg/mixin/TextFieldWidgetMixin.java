@@ -17,10 +17,6 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 @Mixin(TextFieldWidget.class)
 public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget {
-    // TODO: normally, chat messages have whitespace trimmed and collapsed, but sending a tag message bypasses that
-    // TODO: add to message history
-    // TODO: support copying and pasting the tag itself
-
     @Shadow private String text;
 
     private ItemStack itemStack;
