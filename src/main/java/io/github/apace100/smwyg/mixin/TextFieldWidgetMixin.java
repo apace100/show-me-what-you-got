@@ -163,7 +163,7 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
         }
 
         if (original > insertedIndex && original < insertedIndex + insertedLength) {
-            return insertedIndex + insertedLength + 1;
+            return insertedIndex + insertedLength;
         } else {
             return original;
         }
