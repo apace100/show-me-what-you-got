@@ -17,12 +17,11 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 @Mixin(TextFieldWidget.class)
 public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget {
-    // FIXME: normally, chat messages have whitespace trimmed and collapsed, but sending a tag message bypasses that
-    // FIXME: add to message history
+    // TODO: normally, chat messages have whitespace trimmed and collapsed, but sending a tag message bypasses that
+    // TODO: add to message history
+    // TODO: support copying and pasting the tag itself
 
     @Shadow private String text;
-    @Shadow private int selectionStart;
-    @Shadow private int selectionEnd;
 
     private ItemStack itemStack;
     private String insertedString;
@@ -31,52 +30,53 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
 
     @Override
     public void setStack(ItemStack stack) {
-        this.itemStack = stack;
+        itemStack = stack;
         Text text = stack.toHoverableText();
-        this.insertedString = text.getString();
-        this.insertedLength = insertedString.length();
+        insertedString = text.getString();
+        insertedLength = insertedString.length();
     }
 
     @Override
     public ItemStack getStack() {
-        return this.itemStack;
+        return itemStack;
     }
 
     @Override
     public String getTextBefore() {
-        if (insertedIndex < 0 || insertedIndex > this.text.length()) {
-            Log.warn(LogCategory.GENERAL, "Prevented getTextBefore crash with text=%s length=%d insertedIndex=%d", this.text, this.text.length(), insertedIndex);
+        if (insertedIndex < 0 || insertedIndex > text.length()) {
+            Log.warn(LogCategory.GENERAL,"ShowMeWhatYouGot: invalid tag positioning in getTextBefore");
+            Log.warn(LogCategory.GENERAL,
+                    "text=%s length=%d insertedIndex=%d insertedLength=%d",
+                    text, text.length(), insertedIndex, insertedLength);
             return "";
         }
 
-        return this.text.substring(0, insertedIndex);
+        return text.substring(0, insertedIndex);
     }
 
     @Override
     public String getTextAfter() {
-        if (insertedIndex + insertedLength < 0 || insertedIndex + insertedLength > this.text.length()) {
-            Log.warn(LogCategory.GENERAL, "Prevented getTextAfter crash with text=%s length=%d insertedIndex=%d insertedLength=%d", this.text, this.text.length(), insertedIndex, insertedLength);
+        if (insertedIndex + insertedLength < 0 || insertedIndex + insertedLength > text.length()) {
+            Log.warn(LogCategory.GENERAL,"ShowMeWhatYouGot: invalid tag positioning in getTextAfter");
+            Log.warn(LogCategory.GENERAL,
+                    "text=%s length=%d insertedIndex=%d insertedLength=%d",
+                    text, text.length(), insertedIndex, insertedLength);
             return "";
         }
 
-        return this.text.substring(insertedIndex + insertedLength);
+        return text.substring(insertedIndex + insertedLength);
     }
 
     @Override
     public boolean hasStack() {
-        return this.itemStack != null;
+        return itemStack != null;
     }
 
     @Override
     public void onSuggestionInserted(int start, int offset) {
         if (this.hasStack() && start <= insertedIndex) {
-            this.insertedIndex += offset;
+            insertedIndex += offset;
         }
-    }
-
-    @Inject(method = "keyPressed", at = @At("TAIL"))
-    private void logKeyPressed(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
-        Log.info(LogCategory.GENERAL, "insertedString=\"%s\" insertedIndex=%d insertedLength=%d", insertedString, insertedIndex, insertedLength);
     }
 
     @Inject(method = "getCursorPosWithOffset", at = @At("RETURN"), cancellable = true)
@@ -109,7 +109,7 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
                 int skipPos = insertedIndex + insertedLength;
                 // when skipping forwards over a tag, keep going until we hit the beginning of the next word
                 // or the end of the text
-                while (skipPos < this.text.length() && this.text.charAt(skipPos) == ' ') {
+                while (skipPos < text.length() && text.charAt(skipPos) == ' ') {
                     ++skipPos;
                 }
                 cir.setReturnValue(skipPos);
@@ -118,14 +118,12 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
     }
 
     @Inject(method = "write", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;setSelectionStart(I)V"), locals = LocalCapture.CAPTURE_FAILHARD)
-    private void moveInsertedText(String text, CallbackInfo ci, int i, int j, int k, String string, int l, String string2) {
+    private void moveInsertedText(String rawText, CallbackInfo ci, int start, int end, int spaceRemaining, String sanitizedText, int sanitizedTextLength, String newText) {
         if (!this.hasStack()) {
             return;
         }
 
-        if (i <= insertedIndex && j <= insertedIndex) {
-            this.insertedIndex += l;
-        }
+        handleOverwrite(start, end, sanitizedTextLength);
     }
 
     @ModifyVariable(method = "setCursor", at = @At("HEAD"), argsOnly = true, ordinal = 0)
@@ -171,137 +169,40 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
         }
     }
 
-    @Inject(method = "eraseCharacters", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;write(Ljava/lang/String;)V"))
-    private void eraseHighlighted(CallbackInfo ci) {
-        if (!this.hasStack()) {
-            return;
-        }
-
-        // handles highlighting backwards and forwards
-        // the range to be deleted is [left,right)
-        int left = Math.min(this.selectionStart, this.selectionEnd);
-        int right = Math.max(this.selectionStart, this.selectionEnd);
-
-        boolean isErasingBefore = left < insertedIndex && right <= insertedIndex;
-
-        // selecting a range inside the tag is not typically possible, but handle it anyway
-        boolean isLeftInside = left > insertedIndex && left < insertedIndex + insertedLength;
-        boolean isRightInside = right > insertedIndex && right < insertedIndex + insertedLength;
-
-        boolean isErasingEntireTag = left <= insertedIndex && right >= insertedIndex + insertedLength;
-
-        Log.info(LogCategory.GENERAL, "ShowMeWhatYouGot: erasing selection. left=%d right=%d", left, right);
-        Log.info(LogCategory.GENERAL, "isErasingBefore=%b isLeftInside=%b isRightInside=%b isErasingEntireTag=%b",
-                isErasingBefore,
-                isLeftInside,
-                isRightInside,
-                isErasingEntireTag
-        );
-
-        if (isLeftInside || isRightInside || isErasingEntireTag) {
-            Log.info(LogCategory.GENERAL,
-                    "ShowMeWhatYouGot: removing tag"
-            );
-            this.itemStack = null;
-            this.insertedLength = 0;
-            this.insertedString = null;
-            this.insertedIndex = 0;
-        } else if (isErasingBefore) {
-            int offset = right - left;
-            Log.info(LogCategory.GENERAL,
-                    "ShowMeWhatYouGot: erasing %d before tag, insertedIndex=%d -> %d",
-                    offset,
-                    this.insertedIndex,
-                    this.insertedIndex - offset
-            );
-            this.insertedIndex -= offset;
-        }
-    }
-
+    // all input actions are performed through calls to write(), except for un-highlighted backspace/delete. handle that here.
     @Inject(method = "eraseCharacters", at = @At(value = "INVOKE", target = "Ljava/lang/StringBuilder;<init>(Ljava/lang/String;)V"), locals = LocalCapture.CAPTURE_FAILHARD)
-    private void eraseInsertion(int characterOffset, CallbackInfo ci, int index, int indexStart, int indexEnd) {
+    private void eraseInsertion(int characterOffset, CallbackInfo ci, int index, int start, int end) {
         if (!this.hasStack()) {
             return;
         }
 
-        Log.info(LogCategory.GENERAL, "==eraseInsertion==");
-        Log.info(LogCategory.GENERAL, "insertedIndex=%d insertedLength=%d", insertedIndex, insertedLength);
-        Log.info(LogCategory.GENERAL, "index=%d indexStart=%d indexEnd=%d", index, indexStart, indexEnd);
+        handleOverwrite(start, end, 0);
+    }
 
-        // erasing inside the tag is not typically possible, but handle it anyway
-        boolean isStartInside = indexStart > insertedIndex && indexStart < insertedIndex + insertedLength;
-        boolean isEndInside = indexEnd > insertedIndex && indexEnd < insertedIndex + insertedLength;
+    private void handleOverwrite(int start, int end, int replacementLength) {
+        // when nothing is highlighted, start == end
 
-        // It's this check that handles most cases of the tag being erased
-        boolean isErasingTag = indexStart <= insertedIndex && indexEnd >= insertedIndex + insertedLength;
+        Log.info(LogCategory.GENERAL, "erasing [%d,%d)", start, end);
 
-        Log.info(LogCategory.GENERAL, "isStartInside=%b isEndInside=%b isErasingTag=%b", isStartInside, isEndInside, isErasingTag);
+        boolean isErasingEntireTag = start <= insertedIndex && end >= insertedIndex + insertedLength;
+        // selecting a range inside the tag is not typically possible, but handle it anyway
+        boolean isStartInside = start > insertedIndex && start < insertedIndex + insertedLength;
+        boolean isEndInside = end > insertedIndex && end < insertedIndex + insertedLength;
+        boolean isErasingBefore = start <= insertedIndex && end <= insertedIndex;
 
-        if (isStartInside || isEndInside || isErasingTag) {
-            this.itemStack = null;
-            this.insertedLength = 0;
-            this.insertedString = null;
-            this.insertedIndex = 0;
-            Log.info(LogCategory.GENERAL, "ShowMeWhatYouGot: erasing tag");
-        } else {
-            boolean isErasingBefore = indexStart <= insertedIndex || indexEnd <= insertedIndex;
-            if (isErasingBefore) {
-                int oldIdx = this.insertedIndex;
-                this.insertedIndex -= (indexEnd - indexStart);
-                Log.info(LogCategory.GENERAL, "ShowMeWhatYouGot: shifting tag backwards, %d - %d = %d", oldIdx, indexEnd - indexStart, this.insertedIndex);
-            }
+        if (isErasingEntireTag || isStartInside || isEndInside) {
+            reset();
+        } else if (isErasingBefore) {
+            int offset = replacementLength - (end - start);
+            Log.info(LogCategory.GENERAL, "moving tag from %d to %d", insertedIndex, insertedIndex + offset);
+            insertedIndex += offset;
         }
     }
 
-    @Inject(method = "charTyped", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;write(Ljava/lang/String;)V"))
-    private void handleHighlightOverwrite(CallbackInfoReturnable<Boolean> cir) {
-        if (!this.hasStack()) {
-            return;
-        }
-
-        // handles highlighting backwards and forwards
-        // the range to be overwritten is [left,right)
-        int left = Math.min(this.selectionStart, this.selectionEnd);
-        int right = Math.max(this.selectionStart, this.selectionEnd);
-
-        if (left == right) {
-            return;
-        }
-
-        boolean isErasingBefore = left < insertedIndex && right <= insertedIndex;
-
-        // selecting a range inside the tag is not typically possible, but handle it anyway
-        boolean isLeftInside = left > insertedIndex && left < insertedIndex + insertedLength;
-        boolean isRightInside = right > insertedIndex && right < insertedIndex + insertedLength;
-
-        boolean isErasingEntireTag = left <= insertedIndex && right >= insertedIndex + insertedLength;
-
-        Log.info(LogCategory.GENERAL, "ShowMeWhatYouGot: overwriting selection. left=%d right=%d", left, right);
-        Log.info(LogCategory.GENERAL, "isErasingBefore=%b isLeftInside=%b isRightInside=%b isErasingEntireTag=%b",
-                isErasingBefore,
-                isLeftInside,
-                isRightInside,
-                isErasingEntireTag
-        );
-
-        if (isLeftInside || isRightInside || isErasingEntireTag) {
-            Log.info(LogCategory.GENERAL,
-                    "ShowMeWhatYouGot: removing tag"
-            );
-            this.itemStack = null;
-            this.insertedLength = 0;
-            this.insertedString = null;
-            this.insertedIndex = 0;
-        } else if (isErasingBefore) {
-            int offset = right - left;
-            Log.info(LogCategory.GENERAL,
-                    "ShowMeWhatYouGot: offset %d before tag, insertedIndex=%d -> %d",
-                    offset,
-                    this.insertedIndex,
-                    this.insertedIndex - offset
-            );
-            this.insertedIndex -= offset;
-            // further index offset of +1 is handled in the write() mixin.
-        }
+    private void reset() {
+        itemStack = null;
+        insertedLength = 0;
+        insertedString = null;
+        insertedIndex = 0;
     }
 }
