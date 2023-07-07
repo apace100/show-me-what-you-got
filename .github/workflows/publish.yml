@@ -22,5 +22,7 @@ jobs:
         uses: Kir-Antipov/mc-publish@v3.3
         with:
           version: ${{ steps.mod-release-version.outputs.MOD_RELEASE_VERSION }}
+          modrinth-id: jTUiUpsh
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          curseforge-id: 564941
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
