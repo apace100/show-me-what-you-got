@@ -1,8 +1,7 @@
 package io.github.apace100.smwyg.mixin;
 
+import io.github.apace100.smwyg.ShowMeWhatYouGot;
 import io.github.apace100.smwyg.duck.ItemSharingTextFieldWidget;
-import net.fabricmc.loader.impl.util.log.Log;
-import net.fabricmc.loader.impl.util.log.LogCategory;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
@@ -40,9 +39,8 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
     @Override
     public String getTextBefore() {
         if (insertedIndex < 0 || insertedIndex > text.length()) {
-            Log.warn(LogCategory.GENERAL,"ShowMeWhatYouGot: invalid tag positioning in getTextBefore");
-            Log.warn(LogCategory.GENERAL,
-                    "text=%s length=%d insertedIndex=%d insertedLength=%d",
+            ShowMeWhatYouGot.LOGGER.warn("Invalid tag positioning in getTextBefore");
+            ShowMeWhatYouGot.LOGGER.warn("text={} length={} insertedIndex={} insertedLength={}",
                     text, text.length(), insertedIndex, insertedLength);
             return "";
         }
@@ -53,9 +51,8 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
     @Override
     public String getTextAfter() {
         if (insertedIndex + insertedLength < 0 || insertedIndex + insertedLength > text.length()) {
-            Log.warn(LogCategory.GENERAL,"ShowMeWhatYouGot: invalid tag positioning in getTextAfter");
-            Log.warn(LogCategory.GENERAL,
-                    "text=%s length=%d insertedIndex=%d insertedLength=%d",
+            ShowMeWhatYouGot.LOGGER.warn("Invalid tag positioning in getTextAfter");
+            ShowMeWhatYouGot.LOGGER.warn("text={} length={} insertedIndex={} insertedLength={}",
                     text, text.length(), insertedIndex, insertedLength);
             return "";
         }
