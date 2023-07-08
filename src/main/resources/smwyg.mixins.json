@@ -8,8 +8,8 @@
   "client": [
     "ChatScreenAccessor",
     "ChatScreenMixin",
+    "DrawContextMixin",
     "HandledScreenFocusedSlotAccessor",
-    "ScreenMixin",
     "SuggestionWindowMixin",
     "TextFieldWidgetMixin"
   ],

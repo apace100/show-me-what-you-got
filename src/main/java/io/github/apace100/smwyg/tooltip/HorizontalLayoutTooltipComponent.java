@@ -1,6 +1,7 @@
 package io.github.apace100.smwyg.tooltip;
 
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.tooltip.TooltipComponent;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.item.ItemRenderer;
@@ -58,10 +59,10 @@ public class HorizontalLayoutTooltipComponent implements TooltipComponent {
     }
 
     @Override
-    public void drawItems(TextRenderer textRenderer, int x, int y, MatrixStack matrices, ItemRenderer itemRenderer) {
+    public void drawItems(TextRenderer textRenderer, int x, int y, DrawContext context) {
         int currentX = x;
         for(TooltipComponent tc : components) {
-            tc.drawItems(textRenderer, currentX, y + getComponentY(tc), matrices, itemRenderer);
+            tc.drawItems(textRenderer, currentX, y + getComponentY(tc), context);
             currentX += tc.getWidth(textRenderer) + gap;
         }
     }
