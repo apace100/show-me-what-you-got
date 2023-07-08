@@ -5,17 +5,15 @@ import io.github.apace100.smwyg.duck.ItemSharingTextFieldWidget;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.resource.language.I18n;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.Text;
-import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ChatScreen.class)
 public abstract class ChatScreenMixin extends Screen {
@@ -45,11 +43,11 @@ public abstract class ChatScreenMixin extends Screen {
         }
     }
 
-    @Inject(method = "keyPressed", at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/screen/ChatScreen;chatField:Lnet/minecraft/client/gui/widget/TextFieldWidget;", opcode = Opcodes.GETFIELD))
-    private void sendItemSharingMessage(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir) {
+    @ModifyVariable(method = "sendMessage", at = @At("HEAD"), argsOnly = true)
+    private boolean smwyg$sendItemSharingMessage(boolean addToHistory) {
         if(this.chatField instanceof ItemSharingTextFieldWidget istfw) {
             if(!istfw.hasStack()) {
-                return;
+                return addToHistory;
             }
             String before = istfw.getTextBefore();
             ItemStack stack = istfw.getStack();
@@ -58,9 +56,9 @@ public abstract class ChatScreenMixin extends Screen {
             stack.writeNbt(nbt);
             String stackString = "[[smwyg:" + nbt + "]]";
             ShowMeWhatYouGotClient.sendItemSharingMessage(istfw.getInsertionStart(), istfw.getInsertionEnd(), stack);
-            this.sendMessage(this.chatField.getText(), false);
             this.client.inGameHud.getChatHud().addToMessageHistory(before + stackString + after);
-            this.chatField.setText("");
+            return false;
         }
+        return addToHistory;
     }
 }
