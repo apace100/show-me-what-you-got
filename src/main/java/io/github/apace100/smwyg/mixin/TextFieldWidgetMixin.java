@@ -9,6 +9,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -22,9 +23,14 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
     @Shadow private String text;
 
     @Shadow private int selectionStart;
+    @Shadow private int selectionEnd;
+    @Unique
     private ItemStack itemStack;
+    @Unique
     private String insertedString;
+    @Unique
     private int insertedLength;
+    @Unique
     private int insertedIndex = 0;
 
     @Override
@@ -63,7 +69,7 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
     }
 
     @Inject(method = "getCursorPosWithOffset", at = @At("RETURN"), cancellable = true)
-    private void modifyCursorOffset(int offset, CallbackInfoReturnable<Integer> cir) {
+    private void smwyg$modifyCursorOffset(int offset, CallbackInfoReturnable<Integer> cir) {
         int original = cir.getReturnValue();
         if(original > insertedIndex && original < insertedIndex + insertedLength) {
             if(offset < 0) {
@@ -74,15 +80,32 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
         }
     }
 
+    @Inject(method = "write",
+            at = @At(
+                    value = "HEAD"))
+    private void smwyg$removeStackWhenOverwritten(String text, CallbackInfo ci) {
+        int i = Math.min(this.selectionStart, this.selectionEnd);
+        int j = Math.max(this.selectionStart, this.selectionEnd);
+        if(i <= insertedIndex && j > insertedIndex) {
+            this.text = this.text.substring(0, insertedIndex) + this.text.substring(insertedIndex + insertedLength);
+            if(this.selectionStart > this.selectionEnd) {
+                this.selectionStart -= insertedLength;
+            } else {
+                this.selectionEnd -= insertedLength;
+            }
+            reset();
+        }
+    }
+
     @Inject(method = "write", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/TextFieldWidget;setSelectionStart(I)V"), locals = LocalCapture.CAPTURE_FAILHARD)
-    private void moveInsertedText(String text, CallbackInfo ci, int i, int j, int k, String string, int l, String string2) {
+    private void smwyg$moveInsertedText(String text, CallbackInfo ci, int i, int j, int k, String string, int l, String string2) {
         if(i <= insertedIndex && j <= insertedIndex) {
             this.insertedIndex += l;
         }
     }
 
     @ModifyVariable(method = "setCursor", at = @At("HEAD"), argsOnly = true, ordinal = 0)
-    private int modifyCursorSetting(int original) {
+    private int smwyg$modifyCursorSetting(int original) {
         if(original > insertedIndex && original < insertedIndex + insertedLength) {
             if(original <= insertedIndex + (insertedLength / 2)) {
                 return insertedIndex;
@@ -95,7 +118,7 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
     }
 
     @ModifyVariable(method = "setSelectionStart", at = @At("HEAD"), argsOnly = true, ordinal = 0)
-    private int modifySelectionStart(int original) {
+    private int smwyg$modifySelectionStart(int original) {
         if(original > insertedIndex && original < insertedIndex + insertedLength) {
             return insertedIndex;
         } else {
@@ -104,7 +127,7 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
     }
 
     @Inject(method = "eraseCharacters", at = @At(value = "INVOKE", target = "Ljava/lang/StringBuilder;<init>(Ljava/lang/String;)V"), locals = LocalCapture.CAPTURE_FAILHARD)
-    private void eraseInsertion(int characterOffset, CallbackInfo ci, int i, int j, int k) {
+    private void smwyg$eraseInsertion(int characterOffset, CallbackInfo ci, int i, int j, int k) {
         if(j <= insertedIndex && k >= insertedIndex + insertedLength) {
             reset();
         } else {
@@ -115,7 +138,7 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
     }
 
     @ModifyVariable(method = "setSelectionEnd", at = @At("HEAD"), argsOnly = true, ordinal = 0)
-    private int modifySelectionEnd(int original) {
+    private int smwyg$modifySelectionEnd(int original) {
         if(original > insertedIndex && original < insertedIndex + insertedLength) {
             return insertedIndex;
         } else {
@@ -124,7 +147,7 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
     }
 
     @ModifyVariable(method = "setText", at = @At("HEAD"), argsOnly = true, ordinal = 0)
-    private String handleItemSetting(String text) {
+    private String smwyg$handleItemSetting(String text) {
         if(hasStack()) {
             return text;
         }
