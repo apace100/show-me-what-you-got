@@ -126,13 +126,13 @@ public abstract class TextFieldWidgetMixin implements ItemSharingTextFieldWidget
         }
     }
 
-    @Inject(method = "eraseCharacters", at = @At(value = "INVOKE", target = "Ljava/lang/StringBuilder;<init>(Ljava/lang/String;)V"), locals = LocalCapture.CAPTURE_FAILHARD)
-    private void smwyg$eraseInsertion(int characterOffset, CallbackInfo ci, int i, int j, int k) {
-        if(j <= insertedIndex && k >= insertedIndex + insertedLength) {
+    @Inject(method = "eraseCharactersTo", at = @At(value = "INVOKE", target = "Ljava/lang/StringBuilder;<init>(Ljava/lang/String;)V"), locals = LocalCapture.CAPTURE_FAILHARD)
+    private void smwyg$eraseInsertion(int position, CallbackInfo ci, int i, int j) {
+        if(i <= insertedIndex && j >= insertedIndex + insertedLength) {
             reset();
         } else {
-            if(j <= insertedIndex || k <= insertedIndex) {
-                this.insertedIndex -= (k - j);
+            if(i <= insertedIndex || j <= insertedIndex) {
+                this.insertedIndex -= (j - i);
             }
         }
     }
