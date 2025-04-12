@@ -1,6 +1,5 @@
 package io.github.apace100.smwyg;
 
-import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
@@ -63,7 +62,7 @@ public class ShowMeWhatYouGotClient implements ClientModInitializer {
 
     public static ItemStack stackFromString(String itemStackString) {
         try {
-            NbtCompound nbt = new StringNbtReader(new StringReader(itemStackString)).parseCompound();
+            NbtCompound nbt = StringNbtReader.readCompound(itemStackString);
             DataResult<Pair<ItemStack, NbtElement>> decoding = ItemStack.CODEC.decode(getOps(), nbt);
             return decoding.getOrThrow().getFirst();
         } catch (CommandSyntaxException ignored) {

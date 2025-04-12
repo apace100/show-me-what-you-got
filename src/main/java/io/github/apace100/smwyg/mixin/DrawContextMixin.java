@@ -29,15 +29,19 @@ public class DrawContextMixin {
     private ItemStack smwyg$hoveredStack;
 
     @Inject(method = "drawHoverEvent", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawItemTooltip(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/item/ItemStack;II)V"), locals = LocalCapture.CAPTURE_FAILHARD)
-    private void smwyg$cacheHoveredStack(TextRenderer textRenderer, Style style, int x, int y, CallbackInfo ci, HoverEvent hoverEvent, HoverEvent.ItemStackContent itemStackContent) {
-        ItemStack stack = itemStackContent.asStack();
-        if(stack.contains(DataComponentTypes.CUSTOM_DATA)) {
-            NbtComponent customDataNbt = stack.get(DataComponentTypes.CUSTOM_DATA);
-            if(!customDataNbt.isEmpty() && customDataNbt.getNbt().getBoolean(ShowMeWhatYouGot.HIDE_STACK_NBT)) {
-                return;
+    private void smwyg$cacheHoveredStack(TextRenderer textRenderer, Style style, int x, int y, CallbackInfo ci) {
+        if(style == null) return;
+        HoverEvent hoverEvent = style.getHoverEvent();
+        if(hoverEvent instanceof HoverEvent.ShowItem showItem) {
+            ItemStack stack = showItem.item();
+            if(stack.contains(DataComponentTypes.CUSTOM_DATA)) {
+                NbtComponent customDataNbt = stack.get(DataComponentTypes.CUSTOM_DATA);
+                if(!customDataNbt.isEmpty() && customDataNbt.getNbt().getBoolean(ShowMeWhatYouGot.HIDE_STACK_NBT, false)) {
+                    return;
+                }
             }
+            smwyg$hoveredStack = stack;
         }
-        smwyg$hoveredStack = stack;
     }
 
     @Inject(method = "drawTooltip(Lnet/minecraft/client/font/TextRenderer;Ljava/util/List;IILnet/minecraft/client/gui/tooltip/TooltipPositioner;Lnet/minecraft/util/Identifier;)V", at = @At("HEAD"))
